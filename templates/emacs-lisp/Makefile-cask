@@ -1,0 +1,45 @@
+# -*- mode: makefile-gmake -*-
+emacs ?= emacs
+wget ?= wget
+cask ?= cask
+etags ?= etags
+
+auto ?= {{package-name}}-autoloads.el
+
+loadpath=.
+batch = $(emacs) -batch -L $(loadpath)
+
+auto ?= {{projet-name}}-autoloads.el
+el = $(filter-out $(auto),$(wildcard *.el))
+elc = $(el:.el=.elc)
+
+.PHONY: all clean distclean $(auto)
+all : compile $(auto) README.md
+
+compile : $(elc)
+%.elc : %.el
+	$(cask) exec $(batch) -f batch-byte-compile $<
+
+$(pkgdir) : Cask
+	$(cask) install
+	touch $(pkgdir)
+
+README.md: el2markdown.el $(el)
+	$(cask) exec $(batch) -l $< $(el) -f el2markdown-write-readme
+	$(RM) $@~
+
+el2markdown.el:
+	$(wget) -q -O $@ "https://github.com/Lindydancer/el2markdown/master/el2markdown.el"
+
+.INTERMEDIATE: el2markdown.el
+
+TAGS: $(el)
+	$(RM) $@
+	touch $@
+	ls $(el) | xargs etags -a -o $@
+
+clean:
+	$(RM) *~
+
+distclean: clean
+	$(RM) *loaddefs.el *autoloads.el *.elc TAGS

@@ -1,0 +1,7 @@
+(source gnu)
+(source melpa)
+
+(package-file "{{package-name}}")
+
+(development
+ (depends-on "ert"))
